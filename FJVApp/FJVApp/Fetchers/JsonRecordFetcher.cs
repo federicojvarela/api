@@ -20,35 +20,18 @@ namespace FJVApp.Fetchers
 
             try
             {
-                string response = await httpClient.GetStringAsync(url);
-
-                // Deserialize the JSON response
-                var jsonResponse = JsonSerializer.Deserialize<JsonResponse>(response, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var response = await httpClient.GetStringAsync(url);
+                var jsonResponse = DeserializeJsonResponse(response);
 
                 if (jsonResponse != null)
                 {
-                    // Check for "done" message
-                    if (jsonResponse.Status.ToLower() == "done" || jsonResponse.Id.ToLower() == "done")
+                    if (IsDoneMessage(jsonResponse))
                     {
-                        var doneRecord = new Record
-                        {
-                            Id = jsonResponse.Id,
-                            Status = jsonResponse.Status
-                        };
-                        records.Add(doneRecord);
+                        records.Add(CreateRecord(jsonResponse));
                         return records;
                     }
 
-                    // Convert JsonResponse to Record and add to the list
-                    var record = new Record
-                    {
-                        Id = jsonResponse.Id,
-                        Status = jsonResponse.Status
-                    };
-
+                    var record = CreateRecord(jsonResponse);
                     if (IsValid(record))
                     {
                         records.Add(record);
@@ -64,12 +47,35 @@ namespace FJVApp.Fetchers
             {
                 Console.WriteLine("Received 406 status code in JsonRecordFetcher.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Error fetching JSON records: {ex.Message}");
+                Console.WriteLine("Error fetching JSON records");
             }
 
             return records;
+        }
+
+        private JsonResponse DeserializeJsonResponse(string response)
+        {
+            return JsonSerializer.Deserialize<JsonResponse>(response, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new JsonResponse(); // Ensure a non-null return
+        }
+
+        private bool IsDoneMessage(JsonResponse jsonResponse)
+        {
+            return string.Equals(jsonResponse.Status, "done", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(jsonResponse.Id, "done", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private Record CreateRecord(JsonResponse jsonResponse)
+        {
+            return new Record
+            {
+                Id = jsonResponse.Id,
+                Status = jsonResponse.Status
+            };
         }
 
         private bool IsValid(Record record)

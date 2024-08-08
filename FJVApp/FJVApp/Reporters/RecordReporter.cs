@@ -36,7 +36,7 @@ namespace FJVApp.Reporters
                     }
                     else
                     {
-                        Console.WriteLine("Record sent: " + record.id);
+                        Console.WriteLine("Record sent: " + record.id + "\n");
                     }
                 }
                 catch (Exception ex)

@@ -18,8 +18,6 @@ namespace FJVApp.Processors
                 .Where(IsValid)
                 .ToDictionary(r => NormalizeId(r.Id), r => r);
 
-            Console.WriteLine("Starting categorization of records...");
-
             // Find joined records
             foreach (var record in lookupA)
             {
@@ -64,7 +62,7 @@ namespace FJVApp.Processors
                 }
             }
 
-            Console.WriteLine($"Categorization complete. Joined: {joinedRecords.Count}, Orphaned: {orphanedRecords.Count}");
+            Console.WriteLine($"Categorization complete. Joined: {joinedRecords.Count}, Orphaned: {orphanedRecords.Count}\n");
 
             // Clear recordsA and recordsB after processing
             recordsA.Clear();

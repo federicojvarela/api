@@ -24,7 +24,6 @@ namespace FJVApp.Fetchers
             try
             {
                 // Fetch the XML string from the specified URL
-                Console.WriteLine($"Requesting data from {url}");
                 response = await httpClient.GetStringAsync(url);
 
                 // Check for "done" message in the response
@@ -41,7 +40,6 @@ namespace FJVApp.Fetchers
                 // Extract records from XML
                 if (xDocument.Root != null)
                 {
-                    Console.WriteLine("Parsing XML records...");
                     foreach (var element in xDocument.Root.Elements("id"))
                     {
                         var id = element.Attribute("value")?.Value;
@@ -79,9 +77,9 @@ namespace FJVApp.Fetchers
             {
                 Console.WriteLine("Error parsing XML response.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Unexpected error: {ex.Message}");
+                Console.WriteLine("Unexpected error");
             }
 
             return records;
