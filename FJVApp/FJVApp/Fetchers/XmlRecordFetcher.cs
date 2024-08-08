@@ -32,7 +32,7 @@ namespace FJVApp.Fetchers
                 {
                     Console.WriteLine("Received 'done' message. Ending fetch loop.");
                     List<Record> doneRecords = new List<Record>();
-                    doneRecords.Add(new Record { Id = "done", Data = "done" });
+                    doneRecords.Add(new Record { Id = "done", Status = "done" });
                     return doneRecords;
                 }
 
@@ -51,7 +51,7 @@ namespace FJVApp.Fetchers
                             var record = new Record
                             {
                                 Id = id,
-                                Data = "ok" // Assuming "ok" as the status for valid records
+                                Status = "ok"
                             };
 
                             if (IsValid(record))

@@ -35,7 +35,7 @@ namespace FJVApp.Processors
                 {
                     var newRecordA = await FetchSingleRecord(jsonFetcher, JsonEndpoint); // Use constant
 
-                    if (newRecordA.Data.Contains("done")) // Validate for "done"
+                    if (newRecordA.Status.Contains("done")) // Validate for "done"
                     {
                         doneA = true;
                     }
@@ -51,7 +51,7 @@ namespace FJVApp.Processors
                 {
                     var newRecordB = await FetchSingleRecord(xmlFetcher, XmlEndpoint); // Use constant
 
-                    if (newRecordB.Data.Contains("done"))
+                    if (newRecordB.Status.Contains("done"))
                     {
                         doneB = true;
                     }
@@ -105,7 +105,7 @@ namespace FJVApp.Processors
                     await Task.Delay(1000); // Wait before retrying
                 }
             }
-            return new Record(); // Ensure a valid Record is returned
+            return new Record();
         }
     }
 }

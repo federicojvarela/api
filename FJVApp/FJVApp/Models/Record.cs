@@ -6,9 +6,9 @@ namespace FJVApp.Models
         public Record()
         {
             Id = string.Empty;
-            Data = string.Empty;
+            Status = string.Empty;
         }
         public string Id { get; set; }
-        public string Data { get; set; }
+        public string Status { get; set; }
     }
 }

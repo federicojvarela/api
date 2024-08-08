@@ -36,7 +36,7 @@ namespace FJVApp.Fetchers
                         var doneRecord = new Record
                         {
                             Id = jsonResponse.Id,
-                            Data = jsonResponse.Status
+                            Status = jsonResponse.Status
                         };
                         records.Add(doneRecord);
                         return records;
@@ -46,7 +46,7 @@ namespace FJVApp.Fetchers
                     var record = new Record
                     {
                         Id = jsonResponse.Id,
-                        Data = jsonResponse.Status
+                        Status = jsonResponse.Status
                     };
 
                     if (IsValid(record))

@@ -8,10 +8,10 @@ class Program
     static async Task Main(string[] args)
     {
         using var httpClient = new HttpClient();
-
+        const string SinkEndpoint = "http://localhost:7299/sink/a";
         // Instantiate the necessary components
         var matcher = new RecordMatcher();
-        var reporter = new RecordReporter(httpClient, "http://localhost:7299/sink/a");
+        var reporter = new RecordReporter(httpClient, SinkEndpoint);
         var xmlFetcher = new XmlRecordFetcher(httpClient);
         var jsonFetcher = new JsonRecordFetcher(httpClient);
 
