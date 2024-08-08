@@ -1,60 +1,86 @@
 ﻿using FJVApp.Interfaces;
 using FJVApp.Models;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace FJVApp.Processors
 {
     public class RecordMatcher : IRecordMatcher
     {
-        public void MatchRecords(List<Record> recordsA, List<Record> recordsB, out List<SinkRecord> joinedRecords, out List<SinkRecord> orphanedRecords)
+        private List<SinkRecord> orphanedRecords = new List<SinkRecord>(); // Moved to class-level
+
+        public (List<SinkRecord> Joined, List<SinkRecord> Orphaned) CategorizeRecords(List<Record> recordsA, List<Record> recordsB)
         {
-            joinedRecords = new List<SinkRecord>();
-            orphanedRecords = new List<SinkRecord>();
+            var joinedRecords = new List<SinkRecord>();
+            var lookupA = recordsA
+                .Where(IsValid)
+                .ToDictionary(r => NormalizeId(r.Id), r => r);
 
-            var recordBLookup = new ConcurrentDictionary<string, Record>();
+            var lookupB = recordsB
+                .Where(IsValid)
+                .ToDictionary(r => NormalizeId(r.Id), r => r);
 
-            // Add all B records to a concurrent dictionary for fast lookups
-            foreach (var recordB in recordsB)
+            Console.WriteLine("Starting categorization of records...");
+
+            // Find joined records
+            foreach (var record in lookupA)
             {
-                if (IsValid(recordB))
+                if (lookupB.Remove(record.Key, out var _))
                 {
-                    // Normalize ID to ensure consistency
-                    var normalizedId = NormalizeId(recordB.Id);
-                    recordBLookup[normalizedId] = recordB;
-                    Console.WriteLine($"Added to recordBLookup: {normalizedId}");
-                }
-            }
-
-            // Process A records
-            foreach (var recordA in recordsA)
-            {
-                if (!IsValid(recordA))
-                {
-                    continue; // Skip defective records
-                }
-
-                // Normalize ID for consistency
-                var normalizedId = NormalizeId(recordA.Id);
-
-                if (recordBLookup.TryRemove(normalizedId, out _))
-                {
-                    Console.WriteLine($"Match found and removed for ID: {recordA.Id}");
-                    joinedRecords.Add(new SinkRecord { id = recordA.Id, kind = "joined" });
+                    joinedRecords.Add(new SinkRecord { id = record.Key, kind = "joined" });
+                    Console.WriteLine($"Record {record.Key} is joined.");
                 }
                 else
                 {
-                    Console.WriteLine($"No match found for ID: {recordA.Id}");
-                    orphanedRecords.Add(new SinkRecord { id = recordA.Id, kind = "orphaned" });
+                    // Check if the record is in orphanedRecords
+                    var orphanedRecord = orphanedRecords.FirstOrDefault(o => o.id == record.Key);
+                    if (orphanedRecord != null)
+                    {
+                        joinedRecords.Add(new SinkRecord { id = record.Key, kind = "joined" });
+                        orphanedRecords.Remove(orphanedRecord); // Remove from orphanedRecords
+                        Console.WriteLine($"Record {record.Key} is joined (was orphaned).");
+                    }
+                    else
+                    {
+                        orphanedRecords.Add(new SinkRecord { id = record.Key, kind = "orphaned" });
+                        Console.WriteLine($"Record {record.Key} is orphaned (in A only).");
+                    }
                 }
             }
 
-            // Remaining B records are orphaned
-            foreach (var orphanedBRecord in recordBLookup.Values)
+            // Remaining records in lookupB are orphaned
+            foreach (var record in lookupB.Values)
             {
-                Console.WriteLine($"Orphaned Record B ID: {orphanedBRecord.Id}");
-                orphanedRecords.Add(new SinkRecord { id = orphanedBRecord.Id, kind = "orphaned" });
+                // Check if the record is in orphanedRecords
+                var orphanedRecord = orphanedRecords.FirstOrDefault(o => o.id == record.Id);
+                if (orphanedRecord != null)
+                {
+                    joinedRecords.Add(new SinkRecord { id = record.Id, kind = "joined" });
+                    orphanedRecords.Remove(orphanedRecord); // Remove from orphanedRecords
+                    Console.WriteLine($"Record {record.Id} is joined (was orphaned).");
+                }
+                else
+                {
+                    orphanedRecords.Add(new SinkRecord { id = record.Id, kind = "orphaned" });
+                    Console.WriteLine($"Record {record.Id} is orphaned (in B only).");
+                }
             }
+
+            Console.WriteLine($"Categorization complete. Joined: {joinedRecords.Count}, Orphaned: {orphanedRecords.Count}");
+
+            // Clear recordsA and recordsB after processing
+            recordsA.Clear();
+            recordsB.Clear();
+
+            // Immediately return joined records
+            return (joinedRecords, orphanedRecords);
+        }
+
+        // Method to send orphaned records at the end
+        public List<SinkRecord> GetOrphanedRecords()
+        {
+            return orphanedRecords; // Return all orphaned records
         }
 
         private bool IsValid(Record record)

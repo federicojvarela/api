@@ -1,6 +1,10 @@
 ﻿using FJVApp.Interfaces;
 using FJVApp.Models;
+using System.Collections.Generic;
+using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
+using System;
 
 namespace FJVApp.Fetchers
 {
@@ -16,56 +20,56 @@ namespace FJVApp.Fetchers
         public async Task<List<Record>> FetchRecordsAsync(string url)
         {
             var records = new List<Record>();
-            int count = 0;
 
-            while (true)
+            try
             {
-                count++;
-                var response = await httpClient.GetStringAsync(url);
+                string response = await httpClient.GetStringAsync(url);
 
-                // Check for "done" message in the response
-                if (response.Contains("done"))
+                // Deserialize the JSON response
+                var jsonResponse = JsonSerializer.Deserialize<JsonResponse>(response, new JsonSerializerOptions
                 {
-                    break;
-                }
+                    PropertyNameCaseInsensitive = true
+                });
 
-                try
+                if (jsonResponse != null)
                 {
-                    // Deserialize the JSON response into a JsonResponse object
-                    var jsonResponse = JsonSerializer.Deserialize<JsonResponse>(response, new JsonSerializerOptions
+                    // Check for "done" message
+                    if (jsonResponse.Status.ToLower() == "done" || jsonResponse.Id.ToLower() == "done")
                     {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    if (jsonResponse != null && jsonResponse.Status == "ok")
-                    {
-                        // Convert JsonResponse to Record and add to the list
-                        var record = new Record
+                        var doneRecord = new Record
                         {
                             Id = jsonResponse.Id,
                             Data = jsonResponse.Status
                         };
+                        records.Add(doneRecord);
+                        return records;
+                    }
 
-                        if (IsValid(record))
-                        {
-                            records.Add(record);
-                            Console.WriteLine("Record JSON added to list: " + record.Id);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Skipping defective JSON record.");
-                        }
+                    // Convert JsonResponse to Record and add to the list
+                    var record = new Record
+                    {
+                        Id = jsonResponse.Id,
+                        Data = jsonResponse.Status
+                    };
+
+                    if (IsValid(record))
+                    {
+                        records.Add(record);
+                        Console.WriteLine("Record JSON added to list: " + record.Id);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Skipping defective JSON record.");
                     }
                 }
-                catch (JsonException)
-                {
-                    count--;
-                    Console.WriteLine($"Error parsing JSON response");
-                }
-                if (count == 10)
-                {
-                    break;
-                }
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotAcceptable)
+            {
+                Console.WriteLine("Received 406 status code in JsonRecordFetcher.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching JSON records: {ex.Message}");
             }
 
             return records;

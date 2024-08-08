@@ -1,7 +1,11 @@
 ﻿using FJVApp.Interfaces;
 using FJVApp.Models;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using System;
 
 namespace FJVApp.Fetchers
 {
@@ -17,33 +21,41 @@ namespace FJVApp.Fetchers
         public async Task<List<Record>> FetchRecordsAsync(string url)
         {
             var records = new List<Record>();
-            int count = 0;
 
-            while (true)
+
+            string response = null;
+
+            try
             {
-                count++;
-                string? response = null;
-                try
+                // Fetch the XML string from the specified URL
+                Console.WriteLine($"Requesting data from {url}");
+                response = await httpClient.GetStringAsync(url);
+
+                // Check for "done" message in the response
+                if (response.Contains("done"))
                 {
-                    response = await httpClient.GetStringAsync(url);
+                    Console.WriteLine("Received 'done' message. Ending fetch loop.");
+                    List<Record> doneRecords = new List<Record>();
+                    doneRecords.Add(new Record { Id = "done", Data = "done" });
+                    return doneRecords;
+                }
 
-                    // Check for "done" message in the response
-                    if (response.Contains("<done>"))
+                var xDocument = XDocument.Parse(response);
+
+                // Extract records from XML
+                if (xDocument.Root != null)
+                {
+                    Console.WriteLine("Parsing XML records...");
+                    foreach (var element in xDocument.Root.Elements("id"))
                     {
-                        break;
-                    }
+                        var id = element.Attribute("value")?.Value;
 
-                    var xDocument = XDocument.Parse(response);
-
-                    // Extract records from XML
-                    if (xDocument.Root != null)
-                    {
-                        foreach (var element in xDocument.Root.Elements("id"))
+                        if (!string.IsNullOrEmpty(id))
                         {
                             var record = new Record
                             {
-                                Id = element.Attribute("value")?.Value ?? string.Empty,
-                                Data = "ok"
+                                Id = id,
+                                Data = "ok" // Assuming "ok" as the status for valid records
                             };
 
                             if (IsValid(record))
@@ -56,27 +68,26 @@ namespace FJVApp.Fetchers
                                 Console.WriteLine("Skipping defective XML record.");
                             }
                         }
+                        else
+                        {
+                            Console.WriteLine("No 'value' attribute found in 'id' element.");
+                        }
                     }
-                    else
-                    {
-                        Console.WriteLine("XML document has no root element.");
-                    }
                 }
-                catch (XmlException)
+                else
                 {
-                    count--;
-                    Console.WriteLine($"Error parsing XML response");
-                }
-                catch (Exception)
-                {
-                    count--;
-                    Console.WriteLine($"Unexpected error");
-                }
-                if (count == 10)
-                {
-                    break;
+                    Console.WriteLine("XML document has no root element.");
                 }
             }
+            catch (XmlException)
+            {
+                Console.WriteLine("Error parsing XML response.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+            }
+
             return records;
         }
 

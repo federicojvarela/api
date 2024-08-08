@@ -5,6 +5,6 @@ namespace FJVApp.Interfaces
 {
     public interface IRecordMatcher
     {
-        void MatchRecords(List<Record> recordsA, List<Record> recordsB, out List<SinkRecord> joinedRecords, out List<SinkRecord> orphanedRecords);
+        (List<SinkRecord> Joined, List<SinkRecord> Orphaned) CategorizeRecords(List<Record> recordsA, List<Record> recordsB);
     }
 }
