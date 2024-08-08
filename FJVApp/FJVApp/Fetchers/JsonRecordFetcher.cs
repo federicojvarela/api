@@ -1,10 +1,7 @@
 ﻿using FJVApp.Interfaces;
 using FJVApp.Models;
-using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System;
 
 namespace FJVApp.Fetchers
 {

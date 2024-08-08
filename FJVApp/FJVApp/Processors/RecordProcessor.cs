@@ -1,12 +1,13 @@
 using FJVApp.Interfaces;
 using FJVApp.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace FJVApp.Processors
 {
     public class RecordProcessor
     {
+        private const string JsonEndpoint = "http://localhost:7299/source/a"; // Constant for JSON endpoint
+        private const string XmlEndpoint = "http://localhost:7299/source/b"; // Constant for XML endpoint
+
         private readonly IRecordFetcher jsonFetcher;
         private readonly IRecordFetcher xmlFetcher;
         private readonly IRecordMatcher matcher;
@@ -32,12 +33,11 @@ namespace FJVApp.Processors
                 // Fetch one record from JSON endpoint
                 if (!doneA)
                 {
-                    var newRecordA = await FetchSingleRecord(jsonFetcher, "http://localhost:7299/source/a");
-                    Console.WriteLine("-------------------------DATA-A" + newRecordA.Data);
+                    var newRecordA = await FetchSingleRecord(jsonFetcher, JsonEndpoint); // Use constant
+
                     if (newRecordA.Data.Contains("done")) // Validate for "done"
                     {
                         doneA = true;
-                        // throw new InvalidOperationException("Processing JSON completed."); // Stop execution
                     }
                     else
                     {
@@ -49,12 +49,11 @@ namespace FJVApp.Processors
                 // Fetch one record from XML endpoint
                 if (!doneB)
                 {
-                    var newRecordB = await FetchSingleRecord(xmlFetcher, "http://localhost:7299/source/b");
-                    Console.WriteLine("-------------------------DATA-B" + newRecordB.Data);
+                    var newRecordB = await FetchSingleRecord(xmlFetcher, XmlEndpoint); // Use constant
+
                     if (newRecordB.Data.Contains("done"))
                     {
                         doneB = true;
-                        // throw new InvalidOperationException("Processing XML completed."); // Stop execution
                     }
                     else
                     {
@@ -106,7 +105,7 @@ namespace FJVApp.Processors
                     await Task.Delay(1000); // Wait before retrying
                 }
             }
-            return null; // Fallback return
+            return new Record(); // Ensure a valid Record is returned
         }
     }
 }

@@ -1,11 +1,7 @@
 ﻿using FJVApp.Interfaces;
 using FJVApp.Models;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-using System;
 
 namespace FJVApp.Fetchers
 {
@@ -23,7 +19,7 @@ namespace FJVApp.Fetchers
             var records = new List<Record>();
 
 
-            string response = null;
+            string? response = null; // Use nullable string
 
             try
             {

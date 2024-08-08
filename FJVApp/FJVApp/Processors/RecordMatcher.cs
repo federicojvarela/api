@@ -1,14 +1,11 @@
 ﻿using FJVApp.Interfaces;
 using FJVApp.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System;
 
 namespace FJVApp.Processors
 {
     public class RecordMatcher : IRecordMatcher
     {
-        private List<SinkRecord> orphanedRecords = new List<SinkRecord>(); // Moved to class-level
+        private List<SinkRecord> orphanedRecords = new List<SinkRecord>();
 
         public (List<SinkRecord> Joined, List<SinkRecord> Orphaned) CategorizeRecords(List<Record> recordsA, List<Record> recordsB)
         {

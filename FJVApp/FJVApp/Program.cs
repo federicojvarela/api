@@ -1,11 +1,7 @@
 ﻿using FJVApp.Fetchers;
-using FJVApp.Interfaces;
-using FJVApp.Models;
 using FJVApp.Processors;
 using FJVApp.Reporters;
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
+
 
 class Program
 {
