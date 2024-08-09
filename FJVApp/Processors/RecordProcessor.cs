@@ -94,9 +94,9 @@ namespace FJVApp.Processors
                     var records = await fetcher.FetchRecordsAsync(url);
                     return records != null && records.Count > 0 ? records[0] : new Record(); // Return the first record or a new Record if none
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine($"Error fetching records: {ex.Message}");
+                    Console.WriteLine($"Error fetching records");
                     retryCount--;
                     if (retryCount == 0)
                     {
